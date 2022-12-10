@@ -66,8 +66,8 @@ class ACOFacilityLocation:
         
     def run(self):
         for i in range(self.num_iterations):
-            if i % 100 == 0:
-                print(f"Thread {threading.get_ident()}, iteration {i}")
+            
+            print(f"Thread {threading.get_ident()}, iteration {i}")
                 
             if len(self.ants) > 0:
                 current_best = min(self.ants, key=self.evaluate_fitness)
@@ -111,17 +111,16 @@ class ACOFacilityLocation:
                 self.pheromone_matrix[move] += 1.0 / self.evaluate_fitness(path)
                 
                 
-def run_colony(distance_matrix, flow_matrix, num_ants, evaporation_rate):
+def run_colony(distance_matrix, flow_matrix, num_ants, evaporation_rate, iterations):
     print(f"Starting thread {threading.get_ident()}, {num_ants} ants, {evaporation_rate} delta")
-    for i in range(5):
-        
-        colony = ACOFacilityLocation(distance_matrix, flow_matrix, num_ants, 10000, evaporation_rate)
-        start = timeit.default_timer()
-        res, fitness = colony.run()
-        end = timeit.default_timer()
-        
-        with open("output.txt", "a") as f:
-            f.write(f"{num_ants} ants, {evaporation_rate} rate, shortest path: {res}, fitness: {fitness}, took {int(end - start)} seconds\n")
+
+    colony = ACOFacilityLocation(distance_matrix, flow_matrix, num_ants, iterations, evaporation_rate)
+    start = timeit.default_timer()
+    res, fitness = colony.run()
+    end = timeit.default_timer()
+    
+    with open("output.txt", "a") as f:
+        f.write(f"{num_ants} ants, {evaporation_rate} rate, {iterations} iterations, shortest path: {res}, fitness: {fitness}, took {int(end - start)} seconds\n")
 
 if __name__ == "__main__":
     raw_data = None
@@ -148,14 +147,42 @@ if __name__ == "__main__":
         raw_data[53:]))
     )
     
-    t1 = threading.Thread(target=run_colony, args=(distance_matrix, flow_matrix, 100, 0.9))
-    t1.start()
+    # for i in range(5):
+    #     t1 = threading.Thread(target=run_colony, args=(distance_matrix, flow_matrix, 10, 0.9, 100))
+    #     t1.start()
+    threads = []
+
+    for x in range(5):
+        threads.clear()
+        
+        for i in range(1, 5):
+            t1 = threading.Thread(target=run_colony, args=(distance_matrix, flow_matrix, 100, i/10, 10000))
+            threads.append(t1)
+            
+        for t in threads:   
+            t.start() 
+        
+        for t in threads:
+            t.join()
+            
+    for x in range(5):        
+        threads.clear()
+        for i in range(5, 10):
+            t1 = threading.Thread(target=run_colony, args=(distance_matrix, flow_matrix, 100, i/10, 10000))
+            threads.append(t1)
+            
+        for t in threads:   
+            t.start() 
+        
+        for t in threads:
+            t.join()
+
     
-    t2 = threading.Thread(target=run_colony, args=(distance_matrix, flow_matrix, 100, 0.5))
-    t2.start()
+    # t2 = threading.Thread(target=run_colony, args=(distance_matrix, flow_matrix, 100, 0.5))
+    # t2.start()
     
-    t3 = threading.Thread(target=run_colony, args=(distance_matrix, flow_matrix, 10, 0.9))
-    t3.start()
+    # t3 = threading.Thread(target=run_colony, args=(distance_matrix, flow_matrix, 10, 0.9))
+    # t3.start()
     
-    t4 = threading.Thread(target=run_colony, args=(distance_matrix, flow_matrix, 10, 0.5))
-    t4.start()
+    # t4 = threading.Thread(target=run_colony, args=(distance_matrix, flow_matrix, 10, 0.5))
+    # t4.start()
